@@ -11,8 +11,17 @@ module Dovico
       project
     end
 
-    def self.all
-      projects_search = ApiClient.get(URL_PATH)
+    def self.all(project_ids = nil)
+      projects_search_url = URL_PATH
+
+      if project_ids.present?
+        filters = project_ids.map do |project_id|
+          "ItemID eq #{project_id}"
+        end
+        projects_search_url += "?$filter=#{filters.join(' OR ')}"
+      end
+
+      projects_search = ApiClient.get(projects_search_url)
       projects = projects_search["Assignments"].map {|project_hash| parse(project_hash) }
 
       projects.each do |project|
@@ -29,7 +38,7 @@ module Dovico
 
     def self.format_all
       text = " Project | Task | Description\n"
-      text += all.map(&:to_s).join("\n")
+      text += all([99]).map(&:to_s).join("\n")
     end
 
     def to_s
